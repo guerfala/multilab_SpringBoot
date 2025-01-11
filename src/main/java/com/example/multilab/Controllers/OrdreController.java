@@ -2,6 +2,7 @@ package com.example.multilab.Controllers;
 
 import com.example.multilab.DTO.ObjetMissionDTO;
 import com.example.multilab.DTO.ObjetPredifiniDTO;
+import com.example.multilab.DTO.OrdreAddDTO;
 import com.example.multilab.DTO.OrdreDTO;
 import com.example.multilab.Entities.*;
 import com.example.multilab.Repositories.ObjetPredifiniRepo;
@@ -25,7 +26,7 @@ public class OrdreController {
     private ObjetPredifiniRepo objetPredifiniRepo;
 
     @PostMapping
-    public ResponseEntity<OrdreDTO> createOrdre(@RequestBody Ordre ordre) {
+    public ResponseEntity<OrdreAddDTO> createOrdre(@RequestBody Ordre ordre) {
         // Create a new Ordre
         Ordre newOrdre = new Ordre();
         newOrdre.setOrganisme(ordre.getOrganisme());
@@ -52,7 +53,7 @@ public class OrdreController {
         Ordre savedOrdre = ordreRepo.save(newOrdre);
 
         // Convert Ordre to OrdreDTO
-        OrdreDTO ordreDTO = new OrdreDTO();
+        OrdreAddDTO ordreDTO = new OrdreAddDTO();
         ordreDTO.setId(savedOrdre.getId());
         ordreDTO.setOrganisme(savedOrdre.getOrganisme());
 
@@ -75,7 +76,31 @@ public class OrdreController {
 
 
     @GetMapping
-    public List<Ordre> getAllOrdres() {
-        return ordreRepo.findAll();
+    public ResponseEntity<List<OrdreDTO>> getAllOrdres() {
+        List<OrdreDTO> ordreDTOs = ordreRepo.findAll().stream().map(ordre -> {
+            OrdreDTO ordreDTO = new OrdreDTO();
+            ordreDTO.setId(ordre.getId());
+            ordreDTO.setOrganisme(ordre.getOrganisme());
+            ordreDTO.setStatus(ordre.getStatus().toString()); // Map status
+            ordreDTO.setDateDebut(ordre.getDateDebut().toString()); // Map dateDebut
+
+            List<ObjetMissionDTO> objetMissionDTOs = ordre.getObjets().stream().map(objet -> {
+                ObjetMissionDTO objetMissionDTO = new ObjetMissionDTO();
+                objetMissionDTO.setId(objet.getId());
+                objetMissionDTO.setDescription(objet.getCause());
+
+                ObjetPredifiniDTO predifiniDTO = new ObjetPredifiniDTO();
+                predifiniDTO.setId(objet.getObjetPredifini().getId());
+                predifiniDTO.setNom(objet.getObjetPredifini().getNom());
+
+                objetMissionDTO.setObjetPredifini(predifiniDTO);
+                return objetMissionDTO;
+            }).toList();
+
+            ordreDTO.setObjetMissions(objetMissionDTOs);
+            return ordreDTO;
+        }).toList();
+
+        return ResponseEntity.ok(ordreDTOs);
     }
 }

@@ -16,14 +16,14 @@ public class User {
     private int id;
 
     @Column(length = 50, nullable = false)
-    private String Username;
+    private String username;
 
     @Column(length = 50, nullable = false)
-    private String Pwd;
+    private String pwd;
 
     @Column(length = 50, nullable = false)
-    private String Nom;
+    private String nom;
 
     @Column(length = 50, nullable = false)
-    private String Prenom;
+    private String prenom;
 }

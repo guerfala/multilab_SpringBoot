@@ -1,21 +1,36 @@
 package com.example.multilab.Controllers;
 
 import com.example.multilab.Entities.User;
+import com.example.multilab.Repositories.UserRepo;
 import com.example.multilab.Services.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/multilab")
+@RequestMapping("/api/auth")
 @CrossOrigin("http://localhost:4200")
 @AllArgsConstructor
 public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepo userRepo;
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody User user) {
+        return userRepo.findByUsernameAndPwd(user.getUsername(), user.getPwd())
+                .map(foundUser -> {
+                    // Respond with a JSON object
+                    return ResponseEntity.ok("{\"message\": \"Login successful\"}");
+                })
+                .orElse(ResponseEntity.status(401).body("{\"message\": \"Invalid credentials\"}"));
+    }
 
     // http://localhost:8081/multilab/AddUser
     @PostMapping("/AddUser")
