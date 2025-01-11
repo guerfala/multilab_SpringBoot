@@ -20,11 +20,11 @@ public class Ordre {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    private LocalDateTime DateDebut;
+    private LocalDateTime dateDebut;
 
-    private LocalDateTime DateFin;
+    private LocalDateTime dateFin;
 
-    private String Organisme;
+    private String organisme;
 
     @ElementCollection
     private List<Integer> objetsIds;
@@ -35,8 +35,11 @@ public class Ordre {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @ManyToOne
+    private User user;
+
     @AssertTrue(message = "La date de début doit être antérieure à la date de fin")
     public boolean isDatesValid() {
-        return DateDebut.isBefore(DateFin);
+        return dateDebut.isBefore(dateFin);
     }
 }

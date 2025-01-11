@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,11 +29,19 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody User user) {
         return userRepo.findByUsernameAndPwd(user.getUsername(), user.getPwd())
                 .map(foundUser -> {
-                    // Respond with a JSON object
-                    return ResponseEntity.ok("{\"message\": \"Login successful\"}");
+                    // Build a JSON response with user details
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "Login successful");
+                    response.put("id", foundUser.getId());
+                    response.put("username", foundUser.getUsername());
+                    response.put("nom", foundUser.getNom());
+                    response.put("prenom", foundUser.getPrenom());
+
+                    return ResponseEntity.ok(response);
                 })
-                .orElse(ResponseEntity.status(401).body("{\"message\": \"Invalid credentials\"}"));
+                .orElse(ResponseEntity.status(401).body(Collections.singletonMap("message", "Invalid credentials")));
     }
+
 
     // http://localhost:8081/multilab/AddUser
     @PostMapping("/AddUser")
