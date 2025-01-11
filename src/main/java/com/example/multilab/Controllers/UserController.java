@@ -36,6 +36,7 @@ public class UserController {
                     response.put("username", foundUser.getUsername());
                     response.put("nom", foundUser.getNom());
                     response.put("prenom", foundUser.getPrenom());
+                    response.put("role", foundUser.getRole());
 
                     return ResponseEntity.ok(response);
                 })

@@ -1,8 +1,14 @@
 package com.example.multilab.Controllers;
 
+import com.example.multilab.DTO.ObjetMissionDTO;
+import com.example.multilab.DTO.ObjetPredifiniDTO;
 import com.example.multilab.Entities.ObjetMission;
+import com.example.multilab.Entities.Ordre;
+import com.example.multilab.Repositories.ObjetMissionRepo;
+import com.example.multilab.Repositories.OrdreRepo;
 import com.example.multilab.Services.ObjetMissionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +20,30 @@ public class ObjetMissionController {
 
     @Autowired
     private ObjetMissionService objetMissionService;
+
+    @Autowired
+    private ObjetMissionRepo objetMissionRepo;
+
+    @Autowired
+    private OrdreRepo ordreRepo;
+
+    @GetMapping("/api/ordres/{ordreId}/missions")
+    public ResponseEntity<List<ObjetMissionDTO>> getObjetMissions(@PathVariable int ordreId) {
+        Ordre ordre = ordreRepo.findById(ordreId).orElseThrow(() -> new RuntimeException("Ordre not found"));
+        List<ObjetMissionDTO> missions = ordre.getObjets().stream().map(objetMission -> {
+            ObjetMissionDTO dto = new ObjetMissionDTO();
+            dto.setId(objetMission.getId());
+            dto.setDescription(objetMission.getCause());
+            dto.setEtat(objetMission.getEtat());
+            dto.setObjetPredifini(new ObjetPredifiniDTO(
+                    objetMission.getObjetPredifini().getId(),
+                    objetMission.getObjetPredifini().getNom()
+            ));
+            return dto;
+        }).toList();
+        return ResponseEntity.ok(missions);
+    }
+
 
     @GetMapping("/getAll")
     public List<ObjetMission> getAllObjetMissions() {

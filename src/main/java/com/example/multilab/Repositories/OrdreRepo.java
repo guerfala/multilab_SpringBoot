@@ -11,4 +11,6 @@ public interface OrdreRepo extends JpaRepository<Ordre, Integer> {
     List<Ordre> findByUserId(int userId);
 
     List<Ordre> findByUserIdAndDateDebutBetween(int userId, LocalDateTime startOfDay, LocalDateTime endOfDay);
+
+    List<Ordre> findByDateDebutBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
 }

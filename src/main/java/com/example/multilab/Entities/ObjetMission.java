@@ -15,12 +15,12 @@ public class ObjetMission {
     private int id;
 
     @Column(length = 50, nullable = false)
-    private String Nom;
+    private String nom;
 
     @Enumerated(EnumType.STRING)
-    private Etat Etat;
+    private Etat etat;
 
-    private String Cause;
+    private String cause;
 
     @ManyToOne
     @JsonIgnore
