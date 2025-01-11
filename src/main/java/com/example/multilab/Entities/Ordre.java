@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,9 +26,13 @@ public class Ordre {
 
     private String Organisme;
 
-    @OneToMany(mappedBy = "ordre")
-    private List<ObjetMission> Objets;
+    @ElementCollection
+    private List<Integer> objetsIds;
 
+    @OneToMany(mappedBy = "ordre", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ObjetMission> Objets = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @AssertTrue(message = "La date de début doit être antérieure à la date de fin")
