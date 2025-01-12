@@ -45,14 +45,15 @@ public class UserController {
     }
 
     @PostMapping("/addUser")
-    public ResponseEntity<User> addUser(@RequestBody User user) {
+    public ResponseEntity<?> addUser(@RequestBody User user) {
         if (userRepo.findByUsername(user.getUsername()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists");
         }
 
-        User savedUser = userRepo.save(user);
-        return ResponseEntity.ok(savedUser);
+        userRepo.save(user);
+        return ResponseEntity.ok("{\"message\": \"User added successfully\"}");
     }
+
 
 
 }
