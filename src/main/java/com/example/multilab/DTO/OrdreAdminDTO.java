@@ -11,5 +11,6 @@ public class OrdreAdminDTO {
     private List<ObjetMissionDTO> objetMissions;
     private String status; // Add status
     private String dateDebut; // Add dateDebut
+    private String dateFin; // Add dateFin
     private String username;
 }

@@ -154,6 +154,13 @@ public class OrdreController {
             ordreDTO.setDateDebut(ordre.getDateDebut().toString());
             ordreDTO.setUsername(ordre.getUser().getUsername()); // Include user name
 
+            if (ordre.getDateFin() == null)
+            {
+                ordreDTO.setDateFin("N/A");
+            }else {
+                ordreDTO.setDateFin(ordre.getDateFin().toString());
+            }
+
             List<ObjetMissionDTO> objetMissionDTOs = ordre.getObjets().stream().map(objet -> {
                 ObjetMissionDTO objetMissionDTO = new ObjetMissionDTO();
                 objetMissionDTO.setId(objet.getId());
