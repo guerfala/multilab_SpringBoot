@@ -27,6 +27,10 @@ public class ObjetMission {
     private Ordre ordre;
 
     @ManyToOne
+    @JsonIgnore
+    private Mission mission;
+
+    @ManyToOne
     private ObjetPredifini objetPredifini;
 
 }

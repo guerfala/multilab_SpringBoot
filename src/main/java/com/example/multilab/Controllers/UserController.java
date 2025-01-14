@@ -54,6 +54,10 @@ public class UserController {
         return ResponseEntity.ok("{\"message\": \"User added successfully\"}");
     }
 
-
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userRepo.findAll();
+        return ResponseEntity.ok(users);
+    }
 
 }
