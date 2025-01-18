@@ -2,13 +2,12 @@ package com.example.multilab.Controllers;
 
 import com.example.multilab.DTO.MissionRequest;
 import com.example.multilab.DTO.MissionResponse;
-import com.example.multilab.Entities.Mission;
-import com.example.multilab.Entities.ObjetMission;
-import com.example.multilab.Entities.ObjetPredifini;
-import com.example.multilab.Entities.User;
+import com.example.multilab.Entities.*;
 import com.example.multilab.Repositories.MissionRepo;
 import com.example.multilab.Repositories.ObjetPredifiniRepo;
+import com.example.multilab.Repositories.UserFCMTokenRepo;
 import com.example.multilab.Repositories.UserRepo;
+import com.example.multilab.Services.FCMService;
 import com.example.multilab.Services.MissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,10 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -40,36 +37,43 @@ public class MissionController {
     @Autowired
     private MissionService missionService;
 
+    @Autowired
+    private FCMService fcmService;
+
+    @Autowired
+    private UserFCMTokenRepo userFCMTokenRepo;
+
     @PostMapping
     public ResponseEntity<Map<String, String>> addMission(@RequestBody MissionRequest missionRequest) {
+        // ✅ Get assigned user
         User user = userRepo.findById(missionRequest.getUser().getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // ✅ Retrieve the correct FCM token from UserFCMToken entity
+        Optional<UserFCMToken> userFCMTokenOptional = userFCMTokenRepo.findByUser(user);
+        if (userFCMTokenOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "User's FCM Token not found!"));
+        }
+
+        String fcmToken = userFCMTokenOptional.get().getFcmToken();
+
+        // ✅ Create Mission
         Mission mission = new Mission();
         mission.setOrganisme(missionRequest.getOrganisme());
         mission.setDate(Date.valueOf(missionRequest.getDate()).toLocalDate());
         mission.setUser(user);
 
-        // Create and associate ObjetMission entities
-        List<ObjetMission> objetMissions = new ArrayList<>();
-        for (Integer objetId : missionRequest.getObjets()) {
-            ObjetPredifini objetPredifini = objetPredifiniRepo.findById(objetId)
-                    .orElseThrow(() -> new RuntimeException("ObjetPredifini not found"));
-
-            ObjetMission objetMission = new ObjetMission();
-            objetMission.setNom(objetPredifini.getNom());
-            objetMission.setObjetPredifini(objetPredifini);
-            objetMission.setMission(mission); // Associate with the mission
-            objetMissions.add(objetMission);
-        }
-        mission.setObjets(objetMissions);
-
-        // Save the mission (cascade will save ObjetMissions)
         missionRepo.save(mission);
 
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Mission added successfully.");
-        return ResponseEntity.ok(response);
+        // ✅ Send Firebase Notification
+        try {
+            String notificationResponse = fcmService.sendNotification(fcmToken, "New Mission Assigned", "You have a new mission!");
+            System.out.println(notificationResponse);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Mission added successfully."));
     }
 
 

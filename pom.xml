@@ -60,6 +60,13 @@
             <version>3.0.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.2.0</version>
+        </dependency>
+
+
         <!-- Add Jackson module for Java Time -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
