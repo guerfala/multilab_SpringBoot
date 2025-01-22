@@ -60,4 +60,24 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable int id, @RequestBody User updatedUser) {
+        return userRepo.findById(id)
+                .map(user -> {
+                    user.setUsername(updatedUser.getUsername());
+                    user.setNom(updatedUser.getNom());
+                    user.setPrenom(updatedUser.getPrenom());
+                    user.setRole(updatedUser.getRole());
+                    userRepo.save(user);
+                    return ResponseEntity.ok().body(Collections.singletonMap("message", "User updated"));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable int id) {
+        userRepo.deleteById(id);
+        return ResponseEntity.ok().body(Collections.singletonMap("message", "User deleted"));
+    }
+
 }
