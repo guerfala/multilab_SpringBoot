@@ -83,10 +83,14 @@ public class MissionController {
         return ResponseEntity.ok(missions);
     }
 
-    @GetMapping("/by-user")
-    public ResponseEntity<List<Mission>> getMissionsByUser(@RequestParam("userId") int userId) {
-        List<Mission> missions = missionRepo.findByUserId(userId);
-        return ResponseEntity.ok(missions);
+    // ✅ API to fetch missions assigned to a specific user
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<MissionResponse>> getMissionsByUser(@PathVariable int userId) {
+        List<Mission> missions = missionService.getMissionsByUser(userId);
+        List<MissionResponse> response = missions.stream()
+                .map(MissionResponse::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/filter")

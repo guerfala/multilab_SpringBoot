@@ -1,5 +1,6 @@
 package com.example.multilab.Entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,9 +29,20 @@ public class ObjetMission {
 
     @ManyToOne
     @JsonIgnore
+    @JsonBackReference
     private Mission mission;
 
     @ManyToOne
     private ObjetPredifini objetPredifini;
+
+    @Override
+    public String toString() {
+        return "ObjetMission{" +
+                "id=" + id +
+                ", cause='" + cause + '\'' +
+                ", objetPredifini=" + (objetPredifini != null ? objetPredifini.getNom() : "null") +
+                '}'; // 🚫 Removed mission reference to prevent recursion
+    }
+
 
 }

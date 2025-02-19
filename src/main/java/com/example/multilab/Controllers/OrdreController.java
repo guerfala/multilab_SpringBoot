@@ -39,7 +39,7 @@ public class OrdreController {
         Ordre newOrdre = new Ordre();
         newOrdre.setOrganisme(ordre.getOrganisme());
         newOrdre.setDateDebut(LocalDateTime.now());
-        newOrdre.setStatus(Status.ENCOURS);
+        newOrdre.setStatus(Status.NONREALISE);
         newOrdre.setUser(user);
 
         // Add associated ObjetMission entities

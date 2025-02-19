@@ -2,6 +2,7 @@ package com.example.multilab.Entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class Mission {
     private String organisme;
 
     @OneToMany(mappedBy = "mission", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ObjetMission> Objets = new ArrayList<>();
 
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -31,4 +33,14 @@ public class Mission {
 
     @ManyToOne
     private User user;
+
+    @Override
+    public String toString() {
+        return "Mission{" +
+                "id=" + id +
+                ", organisme='" + organisme + '\'' +
+                ", date='" + date + '\'' +
+                '}'; // 🚫 Removed objetMissions to avoid recursion
+    }
+
 }
