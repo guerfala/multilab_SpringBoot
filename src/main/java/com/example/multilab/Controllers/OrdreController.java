@@ -2,9 +2,11 @@ package com.example.multilab.Controllers;
 
 import com.example.multilab.DTO.*;
 import com.example.multilab.Entities.*;
+import com.example.multilab.Repositories.MissionRepo;
 import com.example.multilab.Repositories.ObjetPredifiniRepo;
 import com.example.multilab.Repositories.OrdreRepo;
 import com.example.multilab.Repositories.UserRepo;
+import com.example.multilab.Services.OrdreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,49 +26,29 @@ public class OrdreController {
     private OrdreRepo ordreRepo;
 
     @Autowired
-    private ObjetPredifiniRepo objetPredifiniRepo;
-
-    @Autowired
     private UserRepo userRepo;
 
-    @PostMapping
-    public ResponseEntity<OrdreAddDTO> createOrdre(@RequestBody Ordre ordre, @RequestHeader("user-id") int userId) {
-        // Find the user who is making the order
-        User user = userRepo.findById(userId)
+    @Autowired
+    private MissionRepo missionRepo;
+
+    @PostMapping("/create")
+    public ResponseEntity<String> createOrdre(@RequestBody OrdreAddDTO ordreAddDTO) {
+        Mission mission = missionRepo.findById(ordreAddDTO.getMissionId())
+                .orElseThrow(() -> new RuntimeException("Mission not found"));
+
+        User user = userRepo.findById(ordreAddDTO.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Create a new Ordre
-        Ordre newOrdre = new Ordre();
-        newOrdre.setOrganisme(ordre.getOrganisme());
-        newOrdre.setDateDebut(LocalDateTime.now());
-        newOrdre.setStatus(Status.NONREALISE);
-        newOrdre.setUser(user);
+        Ordre ordre = new Ordre();
+        ordre.setOrganisme(ordreAddDTO.getOrganisme());
+        ordre.setMission(mission);
+        ordre.setUser(user);
+        ordre.setStatus(Status.ENCOURS);
+        ordre.setDateDebut(LocalDateTime.now());
 
-        // Add associated ObjetMission entities
-        if (ordre.getObjetsIds() != null) {
-            for (Integer objetId : ordre.getObjetsIds()) {
-                ObjetPredifini objetPredifini = objetPredifiniRepo.findById(objetId)
-                        .orElseThrow(() -> new RuntimeException("ObjetPredifini not found with ID: " + objetId));
+        ordreRepo.save(ordre);
 
-                ObjetMission objetMission = new ObjetMission();
-                objetMission.setNom(objetPredifini.getNom());
-                objetMission.setObjetPredifini(objetPredifini);
-                objetMission.setCause("");
-                objetMission.setEtat(Etat.NONFINI);
-                objetMission.setOrdre(newOrdre);
-
-                newOrdre.getObjets().add(objetMission);
-            }
-        }
-
-        Ordre savedOrdre = ordreRepo.save(newOrdre);
-
-        // Return a DTO response
-        OrdreAddDTO ordreDTO = new OrdreAddDTO();
-        ordreDTO.setId(savedOrdre.getId());
-        ordreDTO.setOrganisme(savedOrdre.getOrganisme());
-
-        return ResponseEntity.ok(ordreDTO);
+        return ResponseEntity.ok("Ordre created and linked with Mission successfully.");
     }
 
     @GetMapping("/by-day")
@@ -180,64 +162,4 @@ public class OrdreController {
 
         return ResponseEntity.ok(ordreDTOs);
     }
-
-
-
-    /*@GetMapping("/getordresbyuser")
-    public ResponseEntity<List<OrdreDTO>> getOrdresByUser(@RequestHeader("user-id") int userId) {
-        List<OrdreDTO> ordreDTOs = ordreRepo.findByUserId(userId).stream().map(ordre -> {
-            OrdreDTO ordreDTO = new OrdreDTO();
-            ordreDTO.setId(ordre.getId());
-            ordreDTO.setOrganisme(ordre.getOrganisme());
-            ordreDTO.setStatus(ordre.getStatus().toString());
-            ordreDTO.setDateDebut(ordre.getDateDebut().toString());
-
-            List<ObjetMissionDTO> objetMissionDTOs = ordre.getObjets().stream().map(objet -> {
-                ObjetMissionDTO objetMissionDTO = new ObjetMissionDTO();
-                objetMissionDTO.setId(objet.getId());
-                objetMissionDTO.setDescription(objet.getCause());
-
-                ObjetPredifiniDTO predifiniDTO = new ObjetPredifiniDTO();
-                predifiniDTO.setId(objet.getObjetPredifini().getId());
-                predifiniDTO.setNom(objet.getObjetPredifini().getNom());
-
-                objetMissionDTO.setObjetPredifini(predifiniDTO);
-                return objetMissionDTO;
-            }).toList();
-
-            ordreDTO.setObjetMissions(objetMissionDTOs);
-            return ordreDTO;
-        }).toList();
-
-        return ResponseEntity.ok(ordreDTOs);
-    }
-
-    @GetMapping("/getall")
-    public ResponseEntity<List<OrdreDTO>> getAllOrdres() {
-        List<OrdreDTO> ordreDTOs = ordreRepo.findAll().stream().map(ordre -> {
-            OrdreDTO ordreDTO = new OrdreDTO();
-            ordreDTO.setId(ordre.getId());
-            ordreDTO.setOrganisme(ordre.getOrganisme());
-            ordreDTO.setStatus(ordre.getStatus().toString()); // Map status
-            ordreDTO.setDateDebut(ordre.getDateDebut().toString()); // Map dateDebut
-
-            List<ObjetMissionDTO> objetMissionDTOs = ordre.getObjets().stream().map(objet -> {
-                ObjetMissionDTO objetMissionDTO = new ObjetMissionDTO();
-                objetMissionDTO.setId(objet.getId());
-                objetMissionDTO.setDescription(objet.getCause());
-
-                ObjetPredifiniDTO predifiniDTO = new ObjetPredifiniDTO();
-                predifiniDTO.setId(objet.getObjetPredifini().getId());
-                predifiniDTO.setNom(objet.getObjetPredifini().getNom());
-
-                objetMissionDTO.setObjetPredifini(predifiniDTO);
-                return objetMissionDTO;
-            }).toList();
-
-            ordreDTO.setObjetMissions(objetMissionDTOs);
-            return ordreDTO;
-        }).toList();
-
-        return ResponseEntity.ok(ordreDTOs);
-    }*/
 }

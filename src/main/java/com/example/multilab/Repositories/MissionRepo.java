@@ -9,5 +9,6 @@ import java.util.List;
 public interface MissionRepo extends JpaRepository<Mission, Integer> {
     List<Mission> findByUserId(int userId);
     List<Mission> findAllByDateAndUserId(LocalDate date, int userId);
+    List<Mission> findByUserIdAndOrdreIsNull(int userId);
 
 }

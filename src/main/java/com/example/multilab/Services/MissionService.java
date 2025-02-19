@@ -22,6 +22,6 @@ public class MissionService {
     }
 
     public List<Mission> getMissionsByUser(int userId) {
-        return missionRepository.findByUserId(userId);
+        return missionRepository.findByUserIdAndOrdreIsNull(userId); // ✅ Exclude missions with active ordre
     }
 }

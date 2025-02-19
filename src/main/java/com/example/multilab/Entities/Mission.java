@@ -1,5 +1,6 @@
 package com.example.multilab.Entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -25,7 +26,7 @@ public class Mission {
     private String organisme;
 
     @OneToMany(mappedBy = "mission", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference(value = "mission-objetMission")
     private List<ObjetMission> Objets = new ArrayList<>();
 
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -33,6 +34,10 @@ public class Mission {
 
     @ManyToOne
     private User user;
+
+    @OneToOne(mappedBy = "mission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonBackReference(value = "ordre-mission")
+    private Ordre ordre; // ✅ One-to-one relation with Ordre
 
     @Override
     public String toString() {

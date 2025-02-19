@@ -1,6 +1,7 @@
 package com.example.multilab.Repositories;
 
 import com.example.multilab.Entities.Ordre;
+import com.example.multilab.Entities.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -13,4 +14,5 @@ public interface OrdreRepo extends JpaRepository<Ordre, Integer> {
     List<Ordre> findByUserIdAndDateDebutBetween(int userId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
     List<Ordre> findByDateDebutBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
+    boolean existsByMissionIdAndStatus(int missionId, Status status);
 }
