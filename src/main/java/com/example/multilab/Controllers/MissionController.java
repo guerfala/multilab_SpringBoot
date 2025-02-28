@@ -63,6 +63,24 @@ public class MissionController {
         mission.setDate(Date.valueOf(missionRequest.getDate()).toLocalDate());
         mission.setUser(user);
 
+        // ✅ Fetch and attach ObjetMissions
+        List<ObjetMission> objetMissions = new ArrayList<>();
+        for (Integer objetPredifiniId : missionRequest.getObjets()) {
+            ObjetPredifini objetPredifini = objetPredifiniRepo.findById(objetPredifiniId)
+                    .orElseThrow(() -> new RuntimeException("ObjetPredifini not found: " + objetPredifiniId));
+
+            ObjetMission objetMission = new ObjetMission();
+            objetMission.setObjetPredifini(objetPredifini);
+            objetMission.setMission(mission);
+            objetMission.setNom(objetPredifini.getNom()); // ✅ Ensure 'nom' is set
+
+            objetMissions.add(objetMission);
+        }
+
+        // ✅ Set objects list to mission
+        mission.setObjets(objetMissions);
+
+        // ✅ Save Mission
         missionRepo.save(mission);
 
         // ✅ Send Firebase Notification

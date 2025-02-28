@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ordres")
@@ -90,23 +92,29 @@ public class OrdreController {
     }
 
     @PostMapping("/{ordreId}/settle")
-    public ResponseEntity<?> settleOrdre(@PathVariable int ordreId, @RequestBody List<ObjetMission> updatedMissions) {
+    public ResponseEntity<?> settleOrdre(@PathVariable int ordreId, @RequestBody List<ObjetMissionUpdateDTO> updatedMissions) {
         Ordre ordre = ordreRepo.findById(ordreId)
                 .orElseThrow(() -> new RuntimeException("Ordre not found"));
 
-        // Update ObjetMissions
-        for (ObjetMission updatedMission : updatedMissions) {
+        // Update each ObjetMission based on the DTO
+        for (ObjetMissionUpdateDTO dto : updatedMissions) {
             ObjetMission existingMission = ordre.getObjets().stream()
-                    .filter(mission -> mission.getId() == updatedMission.getId())
+                    .filter(m -> m.getId() == dto.getId())
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("ObjetMission not found"));
-
-            existingMission.setEtat(updatedMission.getEtat());
-            existingMission.setCause(updatedMission.getCause());
+            existingMission.setEtat(dto.getEtat());
+            existingMission.setCause(dto.getCause());
         }
 
-        // Update the ordre status to REALISE
-        ordre.setStatus(Status.REALISE);
+        // Check if all missions are ticked.
+        // Assuming that the ticked state is represented by Etat.FINI.
+        boolean allTicked = updatedMissions.stream().allMatch(dto -> dto.getEtat() == Etat.FINIS);
+        if (allTicked) {
+            ordre.setStatus(Status.REALISE);
+        } else {
+            ordre.setStatus(Status.NONREALISE);
+        }
+
         ordre.setDateFin(LocalDateTime.now());
         ordreRepo.save(ordre);
 
@@ -161,5 +169,25 @@ public class OrdreController {
         }).toList();
 
         return ResponseEntity.ok(ordreDTOs);
+    }
+
+    @GetMapping("/stats/{userId}")
+    public ResponseEntity<Map<String, Long>> getOrderStatsForUser(@PathVariable int userId) {
+        List<Object[]> stats = ordreRepo.getOrderStatsByUser(userId);
+        Map<String, Long> result = new HashMap<>();
+
+        // Initialize counts to zero
+        result.put("REALISE", 0L);
+        result.put("NONREALISE", 0L);
+        result.put("ENCOURS", 0L);
+
+        // Update with counts from query result
+        for (Object[] stat : stats) {
+            Status status = (Status) stat[0];
+            Long count = (Long) stat[1];
+            result.put(status.name(), count);
+        }
+
+        return ResponseEntity.ok(result);
     }
 }
