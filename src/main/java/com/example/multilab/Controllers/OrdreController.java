@@ -2,10 +2,7 @@ package com.example.multilab.Controllers;
 
 import com.example.multilab.DTO.*;
 import com.example.multilab.Entities.*;
-import com.example.multilab.Repositories.MissionRepo;
-import com.example.multilab.Repositories.ObjetPredifiniRepo;
-import com.example.multilab.Repositories.OrdreRepo;
-import com.example.multilab.Repositories.UserRepo;
+import com.example.multilab.Repositories.*;
 import com.example.multilab.Services.OrdreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +30,9 @@ public class OrdreController {
     @Autowired
     private MissionRepo missionRepo;
 
+    @Autowired
+    private ObjetMissionRepo objetMissionRepo;
+
     @PostMapping("/create")
     public ResponseEntity<String> createOrdre(@RequestBody OrdreAddDTO ordreAddDTO) {
         Mission mission = missionRepo.findById(ordreAddDTO.getMissionId())
@@ -49,6 +49,13 @@ public class OrdreController {
         ordre.setDateDebut(LocalDateTime.now());
 
         ordreRepo.save(ordre);
+
+        // 🔹 Link all objetMissions to this ordre
+        List<ObjetMission> objets = mission.getObjets();
+        for (ObjetMission objetMission : objets) {
+            objetMission.setOrdre(ordre); // Link to ordre
+        }
+        objetMissionRepo.saveAll(objets); // Save changes
 
         return ResponseEntity.ok("Ordre created and linked with Mission successfully.");
     }
