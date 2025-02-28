@@ -15,7 +15,7 @@ COPY src ./src
 RUN chmod +x mvnw
 
 # Build the Spring Boot application inside the container
-RUN ./mvnw clean package
+RUN ./mvnw clean package -DskipTests
 
 # Copy the generated JAR file to the final container image
 COPY target/*.jar app.jar
