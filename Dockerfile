@@ -1,33 +1,14 @@
-# Use an official OpenJDK runtime as a base image
-FROM openjdk:17-jdk-slim AS builder
+# Utiliser l'image de base OpenJDK
+FROM openjdk:11-jre-slim
 
-# Set the working directory inside the container
+# Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
-# Copy the Maven wrapper and pom.xml first to cache dependencies
-COPY mvnw pom.xml ./
-COPY .mvn .mvn
+# Copier le fichier JAR généré dans l'image Docker
+COPY target/multilab-0.0.1-SNAPSHOT.jar multilab.jar
 
-# Copy the entire source code
-COPY src ./src
-
-# Grant execute permission to Maven wrapper
-RUN chmod +x mvnw
-
-# Build the application
-RUN ./mvnw clean package -DskipTests
-
-# Use a minimal JDK image for the final runtime container
-FROM openjdk:17-jdk-slim
-
-# Set the working directory inside the container
-WORKDIR /app
-
-# Copy the built JAR from the builder stage
-COPY --from=builder /app/target/*.jar app.jar
-
-# Expose the application port
+# Exposer le port sur lequel l'application écoutera (par défaut Spring Boot utilise le port 8080)
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Lancer l'application Spring Boot
+ENTRYPOINT ["java", "-jar", "multilab.jar"]
