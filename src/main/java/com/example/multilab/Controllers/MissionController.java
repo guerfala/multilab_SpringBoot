@@ -5,9 +5,7 @@ import com.example.multilab.DTO.MissionResponse;
 import com.example.multilab.Entities.*;
 import com.example.multilab.Repositories.MissionRepo;
 import com.example.multilab.Repositories.ObjetPredifiniRepo;
-import com.example.multilab.Repositories.UserFCMTokenRepo;
 import com.example.multilab.Repositories.UserRepo;
-import com.example.multilab.Services.FCMService;
 import com.example.multilab.Services.MissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,25 +35,11 @@ public class MissionController {
     @Autowired
     private MissionService missionService;
 
-    @Autowired
-    private FCMService fcmService;
-
-    @Autowired
-    private UserFCMTokenRepo userFCMTokenRepo;
-
     @PostMapping
     public ResponseEntity<Map<String, String>> addMission(@RequestBody MissionRequest missionRequest) {
         // ✅ Get assigned user
         User user = userRepo.findById(missionRequest.getUser().getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // ✅ Retrieve the correct FCM token from UserFCMToken entity
-        /*Optional<UserFCMToken> userFCMTokenOptional = userFCMTokenRepo.findByUser(user);
-        if (userFCMTokenOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "User's FCM Token not found!"));
-        }
-
-        String fcmToken = userFCMTokenOptional.get().getFcmToken();*/
 
         // ✅ Create Mission
         Mission mission = new Mission();
@@ -82,14 +66,6 @@ public class MissionController {
 
         // ✅ Save Mission
         missionRepo.save(mission);
-
-        // ✅ Send Firebase Notification
-        /*try {
-            String notificationResponse = fcmService.sendNotification(fcmToken, "New Mission Assigned", "You have a new mission!");
-            System.out.println(notificationResponse);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }*/
 
         return ResponseEntity.ok(Map.of("message", "Mission added successfully."));
     }

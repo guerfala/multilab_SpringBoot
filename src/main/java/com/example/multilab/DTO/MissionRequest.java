@@ -15,5 +15,4 @@ public class MissionRequest {
     private LocalDate date;
     private List<Integer> objets; // List of ObjetMission IDs
     private User user;
-    private String fcmToken;
 }
