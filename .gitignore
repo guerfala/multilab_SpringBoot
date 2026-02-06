@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignorer les fichiers de configuration contenant des informations sensibles
+application.properties
+.env
