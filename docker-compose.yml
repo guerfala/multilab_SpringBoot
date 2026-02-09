@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8
+    container_name: multilab_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: multilabdb
+      MYSQL_USER: multilabuser
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - multilab-db-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  multilab-app:
+    build: .
+    container_name: multilab_app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/multilabdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: multilabuser
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  multilab-db-data:
