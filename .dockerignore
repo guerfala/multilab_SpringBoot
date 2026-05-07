@@ -1,0 +1,12 @@
+# ═══════════════════════════════════════════════
+# .dockerignore — Fichiers exclus du build Docker
+# ═══════════════════════════════════════════════
+target/
+.git
+.gitignore
+.idea
+*.iml
+*.md
+docker-compose.yml
+.env
+.env.*

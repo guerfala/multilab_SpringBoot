@@ -18,7 +18,7 @@ public class User {
     @Column(length = 50, nullable = false)
     private String username;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 255, nullable = false)
     private String pwd;
 
     @Column(length = 50, nullable = false)

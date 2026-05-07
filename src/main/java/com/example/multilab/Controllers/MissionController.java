@@ -3,24 +3,32 @@ package com.example.multilab.Controllers;
 import com.example.multilab.DTO.MissionRequest;
 import com.example.multilab.DTO.MissionResponse;
 import com.example.multilab.Entities.*;
+import com.example.multilab.Exception.ResourceNotFoundException;
 import com.example.multilab.Repositories.MissionRepo;
 import com.example.multilab.Repositories.ObjetPredifiniRepo;
 import com.example.multilab.Repositories.UserRepo;
 import com.example.multilab.Services.MissionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+/**
+ * ═══════════════════════════════════════════════════════════
+ * MissionController — Refonte Backend
+ *
+ * Changements :
+ * - ResourceNotFoundException au lieu de RuntimeException
+ * - @CrossOrigin supprimé (géré par SecurityConfig)
+ * - Réponses structurées
+ * ═══════════════════════════════════════════════════════════
+ */
 @RestController
 @RequestMapping("/api/missions")
-@CrossOrigin(origins = "*")
 public class MissionController {
 
     @Autowired
@@ -37,49 +45,46 @@ public class MissionController {
 
     @PostMapping
     public ResponseEntity<Map<String, String>> addMission(@RequestBody MissionRequest missionRequest) {
-        // ✅ Get assigned user
         User user = userRepo.findById(missionRequest.getUser().getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "Utilisateur", "id", missionRequest.getUser().getId()));
 
-        // ✅ Create Mission
         Mission mission = new Mission();
         mission.setOrganisme(missionRequest.getOrganisme());
         mission.setDate(Date.valueOf(missionRequest.getDate()).toLocalDate());
         mission.setUser(user);
 
-        // ✅ Fetch and attach ObjetMissions
         List<ObjetMission> objetMissions = new ArrayList<>();
         for (Integer objetPredifiniId : missionRequest.getObjets()) {
             ObjetPredifini objetPredifini = objetPredifiniRepo.findById(objetPredifiniId)
-                    .orElseThrow(() -> new RuntimeException("ObjetPredifini not found: " + objetPredifiniId));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                        "ObjetPredifini", "id", objetPredifiniId));
 
             ObjetMission objetMission = new ObjetMission();
             objetMission.setObjetPredifini(objetPredifini);
             objetMission.setMission(mission);
-            objetMission.setNom(objetPredifini.getNom()); // ✅ Ensure 'nom' is set
-
+            objetMission.setNom(objetPredifini.getNom());
             objetMissions.add(objetMission);
         }
 
-        // ✅ Set objects list to mission
         mission.setObjets(objetMissions);
-
-        // ✅ Save Mission
         missionRepo.save(mission);
 
-        return ResponseEntity.ok(Map.of("message", "Mission added successfully."));
+        return ResponseEntity.ok(Map.of("message", "Mission ajoutée avec succès"));
     }
-
 
     @GetMapping
     public ResponseEntity<List<Mission>> getAllMissions() {
-        List<Mission> missions = missionRepo.findAll();
-        return ResponseEntity.ok(missions);
+        return ResponseEntity.ok(missionRepo.findAll());
     }
 
-    // ✅ API to fetch missions assigned to a specific user
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<MissionResponse>> getMissionsByUser(@PathVariable int userId) {
+        // Vérifier que l'utilisateur existe
+        if (!userRepo.existsById(userId)) {
+            throw new ResourceNotFoundException("Utilisateur", "id", userId);
+        }
+
         List<Mission> missions = missionService.getMissionsByUser(userId);
         List<MissionResponse> response = missions.stream()
                 .map(MissionResponse::new)
@@ -88,7 +93,9 @@ public class MissionController {
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<List<MissionResponse>> getMissionsByDateAndUser(@RequestParam String date, @RequestParam int userId) {
+    public ResponseEntity<List<MissionResponse>> getMissionsByDateAndUser(
+            @RequestParam String date, @RequestParam int userId) {
+
         List<Mission> missions = missionRepo.findAllByDateAndUserId(LocalDate.parse(date), userId);
         List<MissionResponse> response = missions.stream()
                 .map(MissionResponse::new)
@@ -98,17 +105,11 @@ public class MissionController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteMission(@PathVariable int id) {
-        boolean isDeleted = missionService.deleteMissionById(id);
-
-        if (isDeleted) {
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Mission deleted successfully.");
-            return ResponseEntity.ok(response);
-        } else {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Mission not found or could not be deleted.");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        if (!missionRepo.existsById(id)) {
+            throw new ResourceNotFoundException("Mission", "id", id);
         }
-    }
 
+        missionService.deleteMissionById(id);
+        return ResponseEntity.ok(Map.of("message", "Mission supprimée avec succès"));
+    }
 }

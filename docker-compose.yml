@@ -1,31 +1,57 @@
-version: '3.8'
+# ═══════════════════════════════════════════════════════════
+# MultiLab — Docker Compose
+# ═══════════════════════════════════════════════════════════
+# Usage local  : docker compose up -d --build
+# Usage VPS    : docker compose -f docker-compose.yml up -d --build
+# ═══════════════════════════════════════════════════════════
 
 services:
-  db:
-    image: mysql:8.0.36
-    container_name: multilab_db
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: multilabdb
-      MYSQL_USER: multilabuser
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "3306:3306"
-    volumes:
-      - multilab-db-data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
 
-  multilab-app:
-    build: .
-    container_name: multilab_app
+  # ─── MySQL Database ───
+  mysql:
+    image: mysql:8.0
+    container_name: multilab-mysql
+    restart: always
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/multilabdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: multilabuser
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootMultiLab2025}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-multilab}
+      MYSQL_USER: ${MYSQL_USER:-multilab}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-MultiLab2025!Secure}
     ports:
-      - "8080:8080"
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - multilab-network
+
+  # ─── Spring Boot API ───
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: multilab-api
+    restart: always
+    ports:
+      - "${APP_PORT:-8080}:8080"
     depends_on:
-      - db
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-multilab}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-multilab}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-MultiLab2025!Secure}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - multilab-network
 
 volumes:
-  multilab-db-data:
+  mysql_data:
+
+networks:
+  multilab-network:
+    driver: bridge
