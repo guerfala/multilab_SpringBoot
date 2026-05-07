@@ -100,7 +100,9 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:4200",      // Angular dev
             "http://localhost:3000",      // React dev
-            "http://10.0.2.2:8080"       // Émulateur Android
+            "http://10.0.2.2:8080",       // Émulateur Android
+            "https://multilab-tunisia.com.tn",    // ← AJOUTER
+            "http://multilab-tunisia.com.tn"      // ← AJOUTER
         ));
 
         // Méthodes autorisées
