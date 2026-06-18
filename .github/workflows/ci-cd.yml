@@ -1,0 +1,84 @@
+# ═══════════════════════════════════════════════════════════
+# MultiLab — CI/CD Pipeline
+# ═══════════════════════════════════════════════════════════
+# Déclenché à chaque push sur main
+# 1. Build & Test → vérifie que le code compile
+# 2. Deploy → notifie le webhook du VPS pour déployer
+# ═══════════════════════════════════════════════════════════
+
+name: 🚀 MultiLab CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  # ─────────────────────────────────────────
+  # Job 1 : Build & Test
+  # ─────────────────────────────────────────
+  build:
+    name: 🔨 Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: 📦 Build avec Maven
+        run: ./mvnw clean package -DskipTests -B
+
+      - name: ✅ Build réussi
+        run: echo "Le build a réussi !"
+
+  # ─────────────────────────────────────────
+  # Job 2 : Deploy (uniquement sur push main)
+  # ─────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 🔔 Trigger deploy webhook
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: sha256=$(echo -n '{}' | openssl dgst -sha256 -hmac '${{ secrets.WEBHOOK_SECRET }}' | awk '{print $2}')" \
+            -d '{}' \
+            ${{ secrets.WEBHOOK_URL }})
+          
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Webhook déclenché avec succès (HTTP $RESPONSE)"
+          else
+            echo "⚠️ Webhook réponse: HTTP $RESPONSE"
+          fi
+
+      - name: ⏳ Attente du déploiement
+        run: sleep 20
+
+      - name: 🔍 Vérifier que l'API répond
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"username":"admin","pwd":"admin123"}' \
+            ${{ secrets.API_URL }}/auth/login)
+          
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ API opérationnelle (HTTP $RESPONSE)"
+          else
+            echo "❌ API non disponible (HTTP $RESPONSE)"
+            exit 1
+          fi
