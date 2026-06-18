@@ -101,8 +101,8 @@ public class SecurityConfig {
             "http://localhost:4200",      // Angular dev
             "http://localhost:3000",      // React dev
             "http://10.0.2.2:8080",       // Émulateur Android
-            "https://api.multilab-tunisia.com.tn",    // ← AJOUTER
-            "http://api.multilab-tunisia.com.tn"      // ← AJOUTER
+            "https://api.multilab-tunisia.com.tn",
+            "http://api.multilab-tunisia.com.tn"
         ));
 
         // Méthodes autorisées
